@@ -1,5 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.Security;
+using System.Security.Authentication;
 using System.Web;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -10,12 +12,13 @@ public class RiotSignOn
     private const string BaseUrl = "https://auth.riotgames.com";
     // private const string BaseUrl = "https://auth.esports.rpg.riotgames.com";
 
-    private readonly HttpClient _http = new();
+    private readonly HttpClient _http;
     private readonly string _password;
     private readonly string _username;
 
     public RiotSignOn(string username, string password)
     {
+        _http = new HttpClient(new SocketsHttpHandler { SslOptions = new SslClientAuthenticationOptions { EnabledSslProtocols = SslProtocols.Tls13 } });
         _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "RiotAuth/0.1 (https://github.com/aPinat/RiotAuth)");
         _http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
         _http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
