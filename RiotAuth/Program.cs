@@ -17,8 +17,13 @@ var userInfo = await riotClient.GetUserInfoAsync(accessToken);
 Console.WriteLine("riot-client userinfo");
 Console.WriteLine(userInfo);
 
+var entitlements = await riotClient.GetEntitlementsTokenAsync(accessToken);
+Console.WriteLine("riot-client entitlements");
+Console.WriteLine(entitlements);
+
 Console.WriteLine();
 Console.WriteLine();
+Console.ReadLine();
 
 var leagueClient = new LeagueClient(riotClient.RiotSignOn);
 
@@ -44,6 +49,7 @@ Console.WriteLine(sessionToken);
 
 Console.WriteLine();
 Console.WriteLine();
+Console.ReadLine();
 
 var baconClient = new BaconClient(riotClient.RiotSignOn);
 
@@ -61,6 +67,7 @@ Console.WriteLine(userInfo);
 
 Console.WriteLine();
 Console.WriteLine();
+Console.ReadLine();
 
 var valorantClient = new ValorantClient(riotClient.RiotSignOn);
 
@@ -75,3 +82,5 @@ Console.WriteLine(idToken);
 userInfo = await valorantClient.GetUserInfoAsync(accessToken);
 Console.WriteLine("valorant-client userinfo");
 Console.WriteLine(userInfo);
+
+Console.ReadLine();

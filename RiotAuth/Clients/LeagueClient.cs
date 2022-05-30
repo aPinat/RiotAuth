@@ -18,16 +18,9 @@ public class LeagueClient : Client
         // Claims = "{\r\n    \"id_token\": {\r\n        \"rgn_EUW1\": null\r\n    },\r\n    \"userinfo\": {\r\n        \"rgn_EUW1\": null\r\n    }\r\n}" // missing, but not needed anymore with region-less login
     };
 
-    private readonly HttpClient _http = new();
-
     public LeagueClient(string username, string password) : this(new RiotSignOn(username, password)) { }
 
-    public LeagueClient(RiotSignOn riotSignOn) : base(riotSignOn, PostAuthorizationRequest)
-    {
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "RiotAuth/0.1 (https://github.com/aPinat/RiotAuth)");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
-    }
+    public LeagueClient(RiotSignOn riotSignOn) : base(riotSignOn, PostAuthorizationRequest) { }
 
     public async Task<string> GetLoginQueueTokenAsync()
     {
@@ -48,14 +41,10 @@ public class LeagueClient : Client
         return json?["token"]?.GetValue<string>() ?? throw new InvalidOperationException("login-queue didn't respond with a login token");
     }
 
-    public async Task<string> GetLoginSessionTokenAsync()
+    public async Task<string> GetLoginSessionTokenAsync(string? lqToken = null)
     {
-        var lqToken = await GetLoginQueueTokenAsync();
-        return await GetLoginSessionTokenAsync(lqToken);
-    }
+        lqToken ??= await GetLoginQueueTokenAsync();
 
-    public async Task<string> GetLoginSessionTokenAsync(string lqToken)
-    {
         var request = new HttpRequestMessage(HttpMethod.Post, $"{PPUrl}/session-external/v1/session/create");
         request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {lqToken}");
         request.Content = JsonContent.Create(new { claims = new { cname = "lcu" }, product = "lol" }); // region, puuid missing, but not needed
