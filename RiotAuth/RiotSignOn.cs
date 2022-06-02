@@ -1,7 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Net.Security;
-using System.Security.Authentication;
 using System.Web;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -9,8 +7,7 @@ namespace RiotAuth;
 
 public class RiotSignOn
 {
-    private const string BaseUrl = "https://auth.riotgames.com";
-    // private const string BaseUrl = "https://auth.esports.rpg.riotgames.com";
+    private const string BaseUrl = "https://auth.riotgames.com"; // "https://auth.esports.rpg.riotgames.com"
 
     private readonly HttpClient _http;
     private readonly string _password;
@@ -18,10 +15,7 @@ public class RiotSignOn
 
     public RiotSignOn(string username, string password)
     {
-        _http = new HttpClient(new SocketsHttpHandler { SslOptions = new SslClientAuthenticationOptions { EnabledSslProtocols = SslProtocols.Tls13 } });
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "RiotAuth/0.1 (https://github.com/aPinat/RiotAuth)");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
+        _http = HttpClientFactory.CreateHttpClient();
         _username = username;
         _password = password;
     }
@@ -52,7 +46,7 @@ public class RiotSignOn
         return await response.Content.ReadAsStringAsync();
     }
 
-    public async Task<Uri> GetAuthResponseUriAsync(PostAuthorizationRequest post)
+    public async Task<Uri> GetAuthResponseUriAsync(PostAuthorizationRequestDTO post)
     {
         var message = await PostAuthRequestAsync(post);
         return await GetAuthResponseUriAsync(message);
@@ -60,12 +54,12 @@ public class RiotSignOn
 
     private async Task<Uri> GetAuthResponseUriAsync(HttpResponseMessage message)
     {
-        var authorization = await message.Content.ReadFromJsonAsync<Authorization>();
+        var authorization = await message.Content.ReadFromJsonAsync<AuthorizationResponseDTO>();
 
         if (authorization is { Error: null, Type: "auth" })
         {
             message = await PutAuthRequestAsync();
-            authorization = await message.Content.ReadFromJsonAsync<Authorization>();
+            authorization = await message.Content.ReadFromJsonAsync<AuthorizationResponseDTO>();
         }
 
         return authorization switch
@@ -76,12 +70,11 @@ public class RiotSignOn
         };
     }
 
-    private Task<HttpResponseMessage> PostAuthRequestAsync(PostAuthorizationRequest post)
-        => _http.PostAsJsonAsync($"{BaseUrl}/api/v1/authorization", post);
+    private Task<HttpResponseMessage> PostAuthRequestAsync(PostAuthorizationRequestDTO post) =>
+        _http.PostAsJsonAsync($"{BaseUrl}/api/v1/authorization", post);
 
-    private async Task<HttpResponseMessage> PutAuthRequestAsync()
-    {
-        var put = new PutAuthorizationRequest
+    private Task<HttpResponseMessage> PutAuthRequestAsync() =>
+        _http.PutAsJsonAsync($"{BaseUrl}/api/v1/authorization", new PutAuthorizationRequestDTO
         {
             Language = "en_US",
             Password = _password,
@@ -89,10 +82,8 @@ public class RiotSignOn
             Remember = true,
             Type = "auth",
             Username = _username
-        };
-        return await _http.PutAsJsonAsync($"{BaseUrl}/api/v1/authorization", put);
-    }
+        });
 
-    public Task<HttpResponseMessage> DeleteSessionAsync()
-        => _http.DeleteAsync($"{BaseUrl}/api/v1/session");
+    public Task<HttpResponseMessage> DeleteSessionAsync() =>
+        _http.DeleteAsync($"{BaseUrl}/api/v1/session");
 }

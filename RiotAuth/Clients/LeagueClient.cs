@@ -12,7 +12,7 @@ public class LeagueClient : Client
     // TODO: Get from token
     private const string Region = "EUW1";
 
-    private static readonly PostAuthorizationRequest PostAuthorizationRequest = new()
+    private static readonly PostAuthorizationRequestDTO PostAuthorizationRequestDTO = new()
     {
         ClientId = "lol", Scope = "openid offline_access lol ban profile email phone birthdate"
         // Claims = "{\r\n    \"id_token\": {\r\n        \"rgn_EUW1\": null\r\n    },\r\n    \"userinfo\": {\r\n        \"rgn_EUW1\": null\r\n    }\r\n}" // missing, but not needed anymore with region-less login
@@ -20,7 +20,7 @@ public class LeagueClient : Client
 
     public LeagueClient(string username, string password) : this(new RiotSignOn(username, password)) { }
 
-    public LeagueClient(RiotSignOn riotSignOn) : base(riotSignOn, PostAuthorizationRequest) { }
+    public LeagueClient(RiotSignOn riotSignOn) : base(riotSignOn, PostAuthorizationRequestDTO) { }
 
     public async Task<string> GetLoginQueueTokenAsync()
     {

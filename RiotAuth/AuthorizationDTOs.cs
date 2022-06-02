@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace RiotAuth;
 
-public record Authorization(
+public record AuthorizationResponseDTO(
     string Type,
     string? Error,
     string Country,
@@ -18,7 +18,7 @@ public record Parameters(
     Uri Uri
 );
 
-public record PutAuthorizationRequest
+public record PutAuthorizationRequestDTO
 {
     [JsonPropertyName("language")]
     public string? Language { get; init; }
@@ -39,7 +39,7 @@ public record PutAuthorizationRequest
     public string? Username { get; init; }
 }
 
-public record PostAuthorizationRequest
+public record PostAuthorizationRequestDTO
 {
     [JsonPropertyName("acr_values")]
     public string AcrValues { get; init; } = string.Empty;

@@ -1,41 +1,36 @@
 ﻿using System.Net.Http.Json;
-using System.Net.Security;
-using System.Security.Authentication;
 using System.Text.Json.Nodes;
 
 namespace RiotAuth.Clients;
 
 public abstract class Client
 {
-    private readonly PostAuthorizationRequest _postAuthorizationRequest;
+    protected readonly HttpClient _http;
+    private readonly PostAuthorizationRequestDTO _postAuthorizationRequestDTO;
     private string? _accessToken;
     private string? _idToken;
     private string? _puuid;
     private string? _userInfo;
-    protected readonly HttpClient _http;
 
-    protected Client(RiotSignOn riotSignOn, PostAuthorizationRequest postAuthorizationRequest)
+    protected Client(RiotSignOn riotSignOn, PostAuthorizationRequestDTO postAuthorizationRequestDTO)
     {
         RiotSignOn = riotSignOn;
-        _postAuthorizationRequest = postAuthorizationRequest;
-        _http = new HttpClient(new SocketsHttpHandler { SslOptions = new SslClientAuthenticationOptions { EnabledSslProtocols = SslProtocols.Tls13 } });
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "RiotAuth/0.1 (https://github.com/aPinat/RiotAuth)");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
+        _postAuthorizationRequestDTO = postAuthorizationRequestDTO;
+        _http = HttpClientFactory.CreateHttpClient();
     }
 
     public RiotSignOn RiotSignOn { get; }
 
     public async Task<string> GetAccessTokenAsync()
     {
-        var uri = await RiotSignOn.GetAuthResponseUriAsync(_postAuthorizationRequest);
+        var uri = await RiotSignOn.GetAuthResponseUriAsync(_postAuthorizationRequestDTO);
         _accessToken = RiotSignOn.GetAccessToken(uri);
         return _accessToken ?? throw new InvalidOperationException("Unable to fetch access token.");
     }
 
     public async Task<string> GetIdTokenAsync()
     {
-        var uri = await RiotSignOn.GetAuthResponseUriAsync(_postAuthorizationRequest);
+        var uri = await RiotSignOn.GetAuthResponseUriAsync(_postAuthorizationRequestDTO);
         _idToken = RiotSignOn.GetIdToken(uri);
         return _idToken ?? throw new InvalidOperationException("Unable to fetch id token.");
     }
