@@ -18,9 +18,9 @@ public class LeagueClient : Client
         // Claims = "{\r\n    \"id_token\": {\r\n        \"rgn_EUW1\": null\r\n    },\r\n    \"userinfo\": {\r\n        \"rgn_EUW1\": null\r\n    }\r\n}" // missing, but not needed anymore with region-less login
     };
 
-    public LeagueClient(string username, string password) : this(new RiotSignOn(username, password)) { }
-
     public LeagueClient(RiotSignOn riotSignOn) : base(riotSignOn, PostAuthorizationRequestDTO) { }
+
+    public static async Task<LeagueClient> CreateInstanceAsync(string username, string password) => new(await RiotSignOn.CreateInstanceAsync(username, password));
 
     public async Task<string> GetLoginQueueTokenAsync()
     {

@@ -13,11 +13,18 @@ public class RiotSignOn
     private readonly string _password;
     private readonly string _username;
 
-    public RiotSignOn(string username, string password)
+    private RiotSignOn(string username, string password, HttpClient http)
     {
-        _http = HttpClientFactory.CreateHttpClient();
         _username = username;
         _password = password;
+        _http = http;
+    }
+
+    public static async Task<RiotSignOn> CreateInstanceAsync(string username, string password)
+    {
+        var http = HttpClientFactory.CreateHttpClient();
+        await http.GetAsync($"{BaseUrl}/.well-known/openid-configuration");
+        return new RiotSignOn(username, password, http);
     }
 
     public static string? GetAccessToken(Uri uri)

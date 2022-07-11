@@ -3,7 +3,7 @@
 var username = Environment.GetEnvironmentVariable("USERNAME") ?? throw new ArgumentException("USERNAME environment variable not set");
 var password = Environment.GetEnvironmentVariable("PASSWORD") ?? throw new ArgumentException("PASSWORD environment variable not set");
 
-var riotClient = new RiotClient(username, password);
+var riotClient = await RiotClient.CreateInstanceAsync(username, password);
 
 var accessToken = await riotClient.GetAccessTokenAsync();
 Console.WriteLine("riot-client access_token");
