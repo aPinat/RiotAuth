@@ -27,28 +27,24 @@ public class RiotSignOn
         return new RiotSignOn(username, password, http);
     }
 
-    public static string? GetAccessToken(Uri uri)
+    public static JsonWebToken GetAccessToken(Uri uri)
     {
         var collection = HttpUtility.ParseQueryString(uri.Fragment.TrimStart('#'));
-        return collection["access_token"];
+        return new JsonWebToken(collection["access_token"]);
     }
 
-    public static string? GetIdToken(Uri uri)
+    public static JsonWebToken GetIdToken(Uri uri)
     {
         var collection = HttpUtility.ParseQueryString(uri.Fragment.TrimStart('#'));
-        return collection["id_token"];
+        return new JsonWebToken(collection["id_token"]);
     }
 
-    public static string GetPuuid(string token)
-    {
-        var jwt = new JsonWebToken(token);
-        return jwt.Subject;
-    }
+    public static string GetPuuid(JsonWebToken jwt) => jwt.Subject;
 
-    public async Task<string> GetUserInfoAsync(string accessToken)
+    public async Task<string> GetUserInfoAsync(JsonWebToken accessToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/userinfo");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.EncodedToken);
         var response = await _http.SendAsync(request);
         return await response.Content.ReadAsStringAsync();
     }

@@ -1,5 +1,7 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace RiotAuth.Clients;
 
@@ -7,8 +9,8 @@ public abstract class Client
 {
     protected readonly HttpClient _http;
     private readonly PostAuthorizationRequestDTO _postAuthorizationRequestDTO;
-    private string? _accessToken;
-    private string? _idToken;
+    private JsonWebToken? _accessToken;
+    private JsonWebToken? _idToken;
     private string? _puuid;
     private string? _userInfo;
 
@@ -21,21 +23,27 @@ public abstract class Client
 
     public RiotSignOn RiotSignOn { get; }
 
-    public async Task<string> GetAccessTokenAsync()
+    public async Task<JsonWebToken> GetAccessTokenAsync()
     {
+        if (_accessToken?.ValidTo > DateTime.UtcNow.AddMinutes(5))
+            return _accessToken;
+
         var uri = await RiotSignOn.GetAuthResponseUriAsync(_postAuthorizationRequestDTO);
         _accessToken = RiotSignOn.GetAccessToken(uri);
         return _accessToken ?? throw new InvalidOperationException("Unable to fetch access token.");
     }
 
-    public async Task<string> GetIdTokenAsync()
+    public async Task<JsonWebToken> GetIdTokenAsync()
     {
+        if (_idToken?.ValidTo > DateTime.UtcNow.AddMinutes(5))
+            return _idToken;
+
         var uri = await RiotSignOn.GetAuthResponseUriAsync(_postAuthorizationRequestDTO);
         _idToken = RiotSignOn.GetIdToken(uri);
         return _idToken ?? throw new InvalidOperationException("Unable to fetch id token.");
     }
 
-    public async ValueTask<string> GetUserInfoAsync(string? accessToken = null)
+    public async ValueTask<string> GetUserInfoAsync(JsonWebToken? accessToken = null)
     {
         if (_userInfo is { })
             return _userInfo;
@@ -67,12 +75,12 @@ public abstract class Client
         return _puuid;
     }
 
-    public async Task<string> GetEntitlementsTokenAsync(string? accessToken = null)
+    public async Task<string> GetEntitlementsTokenAsync(JsonWebToken? accessToken = null)
     {
         accessToken ??= await GetAccessTokenAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "https://entitlements.auth.riotgames.com/api/token/v1"); // https://entitlements.esports.rpg.riotgames.com/api/token/v1
-        request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {accessToken}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.EncodedToken);
         request.Content = JsonContent.Create(new { urn = "urn:entitlement:%" });
 
         var response = await _http.SendAsync(request);
